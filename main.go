@@ -61,9 +61,7 @@ func main() {
 
 	var Polygons []Polygon
 
-	db.Select("ST_AsGeoJSON(polygons) as geojson, parcel_id as parcel_id, id as id").Limit(10).Find(&Polygons)
-
-	// json.Marshal(Polygons)
+	db.Select("ST_AsGeoJSON(polygons) as geojson, parcel_id as parcel_id, id as id").Limit(1000).Find(&Polygons)
 
 	file, err := os.Create("test.geojson")
 
@@ -72,7 +70,10 @@ func main() {
 	}
 	defer file.Close()
 
-	geojsons := []Geojson{}
+	geojson := Geojson{
+		Type:     "FeatureCollection",
+		Features: []Feature{},
+	}
 
 	for key, _ := range Polygons {
 
@@ -87,24 +88,19 @@ func main() {
 			}
 		}
 
-		geojson := Geojson{
-			Type: "FeatureCollection",
-			Features: []Feature{
-				{
-					Type: "Feature",
-					Geometry: Geometry{
-						Type:        data.Type,
-						Coordinates: data.Coordinates,
-					},
-					Properties: Property{},
-				},
+		feature := Feature{
+			Type: "Feature",
+			Geometry: Geometry{
+				Type:        data.Type,
+				Coordinates: data.Coordinates,
 			},
+			Properties: Property{},
 		}
 
-		geojsons = append(geojsons, geojson)
+		geojson.Features = append(geojson.Features, feature)
 
 	}
 
-	jsonData, _ := json.MarshalIndent(geojsons, "", "  ")
+	jsonData, _ := json.MarshalIndent(geojson, "", "  ")
 	file.Write(jsonData)
 }
