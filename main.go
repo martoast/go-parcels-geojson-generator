@@ -18,6 +18,7 @@ type Geometry struct {
 }
 
 type Property struct {
+	Parcel_id string `json:"parcel_id"`
 }
 
 type Feature struct {
@@ -61,9 +62,9 @@ func main() {
 
 	var Polygons []Polygon
 
-	db.Select("ST_AsGeoJSON(polygons) as geojson, parcel_id as parcel_id, id as id").Limit(1000).Find(&Polygons)
+	db.Select("ST_AsGeoJSON(polygons) as geojson, parcel_id as parcel_id, id as id").Find(&Polygons)
 
-	file, err := os.Create("test.geojson")
+	file, err := os.Create("county/sandiego/city/sandiego.geojson")
 
 	if err != nil {
 		log.Fatal("Cannot create file", err)
@@ -94,7 +95,9 @@ func main() {
 				Type:        data.Type,
 				Coordinates: data.Coordinates,
 			},
-			Properties: Property{},
+			Properties: Property{
+				Parcel_id: Polygons[key].Parcel_id,
+			},
 		}
 
 		geojson.Features = append(geojson.Features, feature)
